@@ -1,27 +1,26 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "@/screens/HomeScreen";
-import { HeaderTitle } from "@/components/HeaderTitle";
+import ResultsScreen from "@/screens/ResultsScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export type HomeStackParamList = {
-  Home: undefined;
+export type ResultsStackParamList = {
+  Results: undefined;
 };
 
-const Stack = createNativeStackNavigator<HomeStackParamList>();
+const Stack = createNativeStackNavigator<ResultsStackParamList>();
 
-export default function HomeStackNavigator() {
+export default function ResultsStackNavigator() {
   const screenOptions = useScreenOptions();
   const { t } = useLanguage();
 
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Results"
+        component={ResultsScreen}
         options={{
-          headerTitle: () => <HeaderTitle title={t.appName} />,
+          title: t.results,
         }}
       />
     </Stack.Navigator>

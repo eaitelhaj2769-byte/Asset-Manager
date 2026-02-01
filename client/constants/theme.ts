@@ -1,30 +1,46 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF";
-const tintColorDark = "#0A84FF";
+const primaryColor = "#1E3A8A";
+const secondaryColor = "#0EA5E9";
 
 export const Colors = {
   light: {
-    text: "#11181C",
+    text: "#0F172A",
+    textSecondary: "#64748B",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-    link: "#007AFF",
-    backgroundRoot: "#FFFFFF", // Elevation 0
-    backgroundDefault: "#F2F2F2", // Elevation 1
-    backgroundSecondary: "#E6E6E6", // Elevation 2
-    backgroundTertiary: "#D9D9D9", // Elevation 3
+    tabIconDefault: "#64748B",
+    tabIconSelected: primaryColor,
+    link: primaryColor,
+    primary: primaryColor,
+    secondary: secondaryColor,
+    backgroundRoot: "#FFFFFF",
+    backgroundDefault: "#F8FAFC",
+    backgroundSecondary: "#F1F5F9",
+    backgroundTertiary: "#E2E8F0",
+    success: "#10B981",
+    error: "#EF4444",
+    warning: "#F59E0B",
+    disabled: "#9CA3AF",
+    border: "#E2E8F0",
   },
   dark: {
-    text: "#ECEDEE",
+    text: "#F1F5F9",
+    textSecondary: "#94A3B8",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    link: "#0A84FF",
-    backgroundRoot: "#1F2123", // Elevation 0
-    backgroundDefault: "#2A2C2E", // Elevation 1
-    backgroundSecondary: "#353739", // Elevation 2
-    backgroundTertiary: "#404244", // Elevation 3
+    tabIconDefault: "#64748B",
+    tabIconSelected: secondaryColor,
+    link: secondaryColor,
+    primary: secondaryColor,
+    secondary: primaryColor,
+    backgroundRoot: "#0F172A",
+    backgroundDefault: "#1E293B",
+    backgroundSecondary: "#334155",
+    backgroundTertiary: "#475569",
+    success: "#10B981",
+    error: "#EF4444",
+    warning: "#F59E0B",
+    disabled: "#6B7280",
+    border: "#334155",
   },
 };
 
@@ -54,6 +70,21 @@ export const BorderRadius = {
 };
 
 export const Typography = {
+  title1: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: "700" as const,
+  },
+  title2: {
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: "600" as const,
+  },
+  title3: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: "600" as const,
+  },
   h1: {
     fontSize: 32,
     lineHeight: 40,
@@ -84,6 +115,11 @@ export const Typography = {
     lineHeight: 20,
     fontWeight: "400" as const,
   },
+  caption: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "400" as const,
+  },
   link: {
     fontSize: 16,
     lineHeight: 24,
@@ -93,26 +129,75 @@ export const Typography = {
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: "ui-monospace",
+    sans: "IBMPlexSans_400Regular",
+    sansBold: "IBMPlexSans_700Bold",
+    sansSemiBold: "IBMPlexSans_600SemiBold",
+    arabic: "IBMPlexSansArabic_400Regular",
+    arabicBold: "IBMPlexSansArabic_700Bold",
   },
   default: {
-    sans: "normal",
-    serif: "serif",
-    rounded: "normal",
-    mono: "monospace",
+    sans: "IBMPlexSans_400Regular",
+    sansBold: "IBMPlexSans_700Bold",
+    sansSemiBold: "IBMPlexSans_600SemiBold",
+    arabic: "IBMPlexSansArabic_400Regular",
+    arabicBold: "IBMPlexSansArabic_700Bold",
   },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded:
-      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    sans: "'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+    sansBold: "'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+    sansSemiBold: "'IBM Plex Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+    arabic: "'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif",
+    arabicBold: "'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif",
   },
 });
+
+export const Shadows = {
+  sm: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    },
+    android: {
+      elevation: 1,
+    },
+    default: {},
+  }),
+  md: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    android: {
+      elevation: 3,
+    },
+    default: {},
+  }),
+  lg: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+    },
+    android: {
+      elevation: 6,
+    },
+    default: {},
+  }),
+  fab: Platform.select({
+    ios: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    },
+    android: {
+      elevation: 4,
+    },
+    default: {},
+  }),
+};

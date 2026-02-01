@@ -4,6 +4,8 @@ import { View, StyleSheet, Image } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { Spacing } from "@/constants/theme";
 
+import appIcon from "../../assets/images/icon.png";
+
 interface HeaderTitleProps {
   title: string;
 }
@@ -12,7 +14,7 @@ export function HeaderTitle({ title }: HeaderTitleProps) {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../../assets/images/icon.png")}
+        source={appIcon}
         style={styles.icon}
         resizeMode="contain"
       />
@@ -31,6 +33,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     marginRight: Spacing.sm,
+    borderRadius: 6,
   },
   title: {
     fontSize: 17,

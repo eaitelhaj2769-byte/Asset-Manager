@@ -16,6 +16,7 @@ interface ButtonProps {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  variant?: "primary" | "secondary" | "outline";
 }
 
 const springConfig: WithSpringConfig = {
@@ -33,6 +34,7 @@ export function Button({
   children,
   style,
   disabled = false,
+  variant = "primary",
 }: ButtonProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
@@ -53,6 +55,18 @@ export function Button({
     }
   };
 
+  const getBackgroundColor = () => {
+    if (variant === "outline") return "transparent";
+    if (variant === "secondary") return theme.backgroundSecondary;
+    return theme.primary;
+  };
+
+  const getTextColor = () => {
+    if (variant === "outline") return theme.primary;
+    if (variant === "secondary") return theme.text;
+    return theme.buttonText;
+  };
+
   return (
     <AnimatedPressable
       onPress={disabled ? undefined : onPress}
@@ -62,19 +76,25 @@ export function Button({
       style={[
         styles.button,
         {
-          backgroundColor: theme.link,
+          backgroundColor: getBackgroundColor(),
           opacity: disabled ? 0.5 : 1,
+          borderWidth: variant === "outline" ? 2 : 0,
+          borderColor: theme.primary,
         },
         style,
         animatedStyle,
       ]}
     >
-      <ThemedText
-        type="body"
-        style={[styles.buttonText, { color: theme.buttonText }]}
-      >
-        {children}
-      </ThemedText>
+      {typeof children === "string" ? (
+        <ThemedText
+          type="body"
+          style={[styles.buttonText, { color: getTextColor() }]}
+        >
+          {children}
+        </ThemedText>
+      ) : (
+        children
+      )}
     </AnimatedPressable>
   );
 }
@@ -82,9 +102,10 @@ export function Button({
 const styles = StyleSheet.create({
   button: {
     height: Spacing.buttonHeight,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.sm,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: Spacing.xl,
   },
   buttonText: {
     fontWeight: "600",
