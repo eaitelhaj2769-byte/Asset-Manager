@@ -34,43 +34,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const url = `https://e-apps.fsjes.uca.ma/scolarite/resultat/index.php?apogee=${studentId}`;
       
+      console.log(`Fetching results from: ${url}`);
+      
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
           'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7,ar;q=0.6',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
         },
       });
 
       if (!response.ok) {
+        console.log(`Response status: ${response.status}`);
         throw new Error(`Failed to fetch results: ${response.status}`);
       }
 
       const html = await response.text();
+      console.log(`HTML length: ${html.length}`);
+      
       const $ = cheerio.load(html);
 
-      const studentName = extractStudentName($) || `Student ${studentId}`;
-      const academicYear = extractAcademicYear($) || getCurrentAcademicYear();
-      const semester = extractSemester($) || "Semester 1";
-      const subjects = extractSubjects($);
+      const studentName = extractStudentName($, html) || `Etudiant ${studentId}`;
+      const academicYear = extractAcademicYear($, html) || getCurrentAcademicYear();
+      const semester = extractSemester($, html) || "Semestre 1";
+      const subjects = extractSubjects($, html);
 
-      if (subjects.length === 0) {
-        const mockSubjects = generateMockSubjects();
-        const result: SemesterResult = {
-          id: `${studentId}-${academicYear}-${semester}`.replace(/\s+/g, '-'),
-          studentId,
-          studentName,
-          semester,
-          academicYear,
-          subjects: mockSubjects,
-          gpa: calculateGPA(mockSubjects),
-          totalCredits: mockSubjects.length * 4,
-          earnedCredits: mockSubjects.filter(s => s.status === 'V' || s.status === 'AC').length * 4,
-          fetchedAt: new Date().toISOString(),
-        };
+      console.log(`Found ${subjects.length} subjects`);
+      console.log(`Student name: ${studentName}`);
+      console.log(`Academic year: ${academicYear}`);
+      console.log(`Semester: ${semester}`);
 
-        return res.json(result);
-      }
+      const validGrades = subjects.filter(s => s.grade !== null);
+      const gpa = validGrades.length > 0 
+        ? parseFloat((validGrades.reduce((sum, s) => sum + (s.grade || 0), 0) / validGrades.length).toFixed(2))
+        : 0;
 
       const result: SemesterResult = {
         id: `${studentId}-${academicYear}-${semester}`.replace(/\s+/g, '-'),
@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         semester,
         academicYear,
         subjects,
-        gpa: calculateGPA(subjects),
+        gpa,
         totalCredits: subjects.length * 4,
         earnedCredits: subjects.filter(s => s.status === 'V' || s.status === 'AC').length * 4,
         fetchedAt: new Date().toISOString(),
@@ -88,25 +88,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error("Error fetching results:", error);
-      
-      const mockSubjects = generateMockSubjects();
-      const academicYear = getCurrentAcademicYear();
-      const semester = "Semester 1";
-      
-      const result: SemesterResult = {
-        id: `${studentId}-${academicYear}-${semester}`.replace(/\s+/g, '-'),
-        studentId,
-        studentName: `Student ${studentId}`,
-        semester,
-        academicYear,
-        subjects: mockSubjects,
-        gpa: calculateGPA(mockSubjects),
-        totalCredits: mockSubjects.length * 4,
-        earnedCredits: mockSubjects.filter(s => s.status === 'V' || s.status === 'AC').length * 4,
-        fetchedAt: new Date().toISOString(),
-      };
-
-      res.json(result);
+      return res.status(500).json({ 
+        message: "Unable to fetch results from the university server. Please try again later." 
+      });
     }
   });
 
@@ -114,38 +98,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-function extractStudentName($: cheerio.CheerioAPI): string | null {
+function extractStudentName($: cheerio.CheerioAPI, html: string): string | null {
+  const patterns = [
+    /<td[^>]*>.*?Nom.*?<\/td>\s*<td[^>]*>(.*?)<\/td>/is,
+    /<td[^>]*>.*?Name.*?<\/td>\s*<td[^>]*>(.*?)<\/td>/is,
+    /Nom\s*:\s*([^<\n]+)/i,
+    /Etudiant\s*:\s*([^<\n]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      const name = match[1].replace(/<[^>]*>/g, '').trim();
+      if (name.length > 2) return name;
+    }
+  }
+
   const nameElement = $('td:contains("Nom")').next('td');
   if (nameElement.length) {
-    return nameElement.text().trim();
+    const name = nameElement.text().trim();
+    if (name.length > 2) return name;
   }
+
+  const nameCell = $('th:contains("Nom")').parent().find('td');
+  if (nameCell.length) {
+    const name = nameCell.text().trim();
+    if (name.length > 2) return name;
+  }
+
+  return null;
+}
+
+function extractAcademicYear($: cheerio.CheerioAPI, html: string): string | null {
+  const yearPatterns = [
+    /20\d{2}[-\/]20\d{2}/,
+    /Année\s*(?:universitaire|scolaire)\s*:\s*(20\d{2}[-\/]20\d{2})/i,
+  ];
   
-  const headerText = $('h2, h3, .student-name').first().text().trim();
-  if (headerText && headerText.length > 2) {
-    return headerText;
+  for (const pattern of yearPatterns) {
+    const match = html.match(pattern);
+    if (match) {
+      return match[0].includes(':') ? match[1] : match[0];
+    }
   }
   
   return null;
 }
 
-function extractAcademicYear($: cheerio.CheerioAPI): string | null {
-  const yearPattern = /20\d{2}[-\/]20\d{2}/;
-  const bodyText = $('body').text();
-  const match = bodyText.match(yearPattern);
-  return match ? match[0] : null;
-}
-
-function extractSemester($: cheerio.CheerioAPI): string | null {
+function extractSemester($: cheerio.CheerioAPI, html: string): string | null {
   const semesterPatterns = [
     /Semestre\s*\d+/i,
     /S\d+/i,
     /Semester\s*\d+/i,
+    /الفصل\s*\d+/,
   ];
   
-  const bodyText = $('body').text();
-  
   for (const pattern of semesterPatterns) {
-    const match = bodyText.match(pattern);
+    const match = html.match(pattern);
     if (match) {
       return match[0];
     }
@@ -154,47 +163,132 @@ function extractSemester($: cheerio.CheerioAPI): string | null {
   return null;
 }
 
-function extractSubjects($: cheerio.CheerioAPI): Subject[] {
+function extractSubjects($: cheerio.CheerioAPI, html: string): Subject[] {
   const subjects: Subject[] = [];
-  
-  $('table tr').each((_, row) => {
-    const cells = $(row).find('td');
-    if (cells.length >= 3) {
-      const subjectName = $(cells[0]).text().trim();
-      const gradeText = $(cells[1]).text().trim();
-      const statusText = $(cells[2]).text().trim().toUpperCase();
+  const seen = new Set<string>();
+
+  $('table').each((_, table) => {
+    $(table).find('tr').each((_, row) => {
+      const cells = $(row).find('td');
       
-      if (subjectName && subjectName.length > 2) {
-        const grade = parseFloat(gradeText);
-        const status = parseStatus(statusText);
+      if (cells.length >= 2) {
+        let subjectName = '';
+        let gradeText = '';
+        let statusText = '';
+
+        if (cells.length >= 3) {
+          subjectName = $(cells[0]).text().trim();
+          gradeText = $(cells[1]).text().trim();
+          statusText = $(cells[2]).text().trim();
+        } else if (cells.length === 2) {
+          subjectName = $(cells[0]).text().trim();
+          gradeText = $(cells[1]).text().trim();
+        }
+
+        subjectName = subjectName.replace(/\s+/g, ' ').trim();
+
+        if (subjectName.length > 3 && 
+            !subjectName.toLowerCase().includes('module') &&
+            !subjectName.toLowerCase().includes('matière') &&
+            !subjectName.toLowerCase().includes('note') &&
+            !subjectName.toLowerCase().includes('statut') &&
+            !seen.has(subjectName.toLowerCase())) {
+          
+          seen.add(subjectName.toLowerCase());
+
+          const gradeMatch = gradeText.match(/(\d+(?:[.,]\d+)?)/);
+          let grade: number | null = null;
+          
+          if (gradeMatch) {
+            grade = parseFloat(gradeMatch[1].replace(',', '.'));
+            if (grade > 20 || grade < 0) grade = null;
+          }
+
+          let status: Subject['status'] = 'V';
+          const statusUpper = statusText.toUpperCase();
+          
+          if (statusUpper.includes('NV') || statusUpper.includes('NON VALID')) {
+            status = 'NV';
+          } else if (statusUpper.includes('AC') || statusUpper.includes('ACQUIS')) {
+            status = 'AC';
+          } else if (statusUpper.includes('ABJ')) {
+            status = 'ABJ';
+          } else if (statusUpper.includes('ABI')) {
+            status = 'ABI';
+          } else if (grade !== null) {
+            status = grade >= 10 ? 'V' : 'NV';
+          }
+
+          subjects.push({
+            name: subjectName,
+            grade,
+            status,
+          });
+        }
+      }
+    });
+  });
+
+  const rowPattern = /<tr[^>]*>(.*?)<\/tr>/gis;
+  const cellPattern = /<td[^>]*>(.*?)<\/td>/gis;
+  let rowMatch;
+  
+  while ((rowMatch = rowPattern.exec(html)) !== null) {
+    const rowContent = rowMatch[1];
+    const cells: string[] = [];
+    let cellMatch;
+    
+    const cellRegex = /<td[^>]*>(.*?)<\/td>/gis;
+    while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]*>/g, '').trim());
+    }
+
+    if (cells.length >= 2) {
+      const subjectName = cells[0].replace(/\s+/g, ' ').trim();
+      
+      if (subjectName.length > 3 && 
+          !subjectName.toLowerCase().includes('module') &&
+          !subjectName.toLowerCase().includes('matière') &&
+          !subjectName.toLowerCase().includes('note') &&
+          !subjectName.toLowerCase().includes('statut') &&
+          !seen.has(subjectName.toLowerCase())) {
         
+        seen.add(subjectName.toLowerCase());
+
+        const gradeMatch = cells[1]?.match(/(\d+(?:[.,]\d+)?)/);
+        let grade: number | null = null;
+        
+        if (gradeMatch) {
+          grade = parseFloat(gradeMatch[1].replace(',', '.'));
+          if (grade > 20 || grade < 0) grade = null;
+        }
+
+        let status: Subject['status'] = 'V';
+        const statusText = cells[2] || '';
+        const statusUpper = statusText.toUpperCase();
+        
+        if (statusUpper.includes('NV')) {
+          status = 'NV';
+        } else if (statusUpper.includes('AC')) {
+          status = 'AC';
+        } else if (statusUpper.includes('ABJ')) {
+          status = 'ABJ';
+        } else if (statusUpper.includes('ABI')) {
+          status = 'ABI';
+        } else if (grade !== null) {
+          status = grade >= 10 ? 'V' : 'NV';
+        }
+
         subjects.push({
           name: subjectName,
-          grade: isNaN(grade) ? null : grade,
+          grade,
           status,
         });
       }
     }
-  });
-  
+  }
+
   return subjects;
-}
-
-function parseStatus(statusText: string): Subject['status'] {
-  if (statusText.includes('V') && !statusText.includes('NV')) return 'V';
-  if (statusText.includes('NV')) return 'NV';
-  if (statusText.includes('AC')) return 'AC';
-  if (statusText.includes('ABJ')) return 'ABJ';
-  if (statusText.includes('ABI')) return 'ABI';
-  return 'V';
-}
-
-function calculateGPA(subjects: Subject[]): number {
-  const validGrades = subjects.filter(s => s.grade !== null);
-  if (validGrades.length === 0) return 0;
-  
-  const sum = validGrades.reduce((acc, s) => acc + (s.grade || 0), 0);
-  return parseFloat((sum / validGrades.length).toFixed(2));
 }
 
 function getCurrentAcademicYear(): string {
@@ -206,28 +300,4 @@ function getCurrentAcademicYear(): string {
     return `${year}/${year + 1}`;
   }
   return `${year - 1}/${year}`;
-}
-
-function generateMockSubjects(): Subject[] {
-  const subjectNames = [
-    "Introduction au Droit",
-    "Économie Générale",
-    "Mathématiques Appliquées",
-    "Comptabilité Générale",
-    "Management des Organisations",
-    "Statistiques Descriptives",
-    "Langue et Terminologie",
-    "Informatique de Gestion",
-  ];
-  
-  return subjectNames.map(name => {
-    const grade = Math.round((Math.random() * 12 + 8) * 100) / 100;
-    const status: Subject['status'] = grade >= 10 ? 'V' : 'NV';
-    
-    return {
-      name,
-      grade,
-      status,
-    };
-  });
 }

@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Image,
   FlatList,
-  Pressable,
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,9 +14,6 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
   FadeInRight,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -26,18 +22,16 @@ import { Card } from '@/components/Card';
 import { useTheme } from '@/hooks/useTheme';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useResults, Subject } from '@/contexts/ResultsContext';
-import { Spacing, BorderRadius, Colors, Shadows } from '@/constants/theme';
+import { Spacing, BorderRadius, Colors } from '@/constants/theme';
 
 import emptyResultsImage from '../../assets/images/empty-results.png';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ResultsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme, isDark } = useTheme();
-  const { t, isRTL } = useLanguage();
+  const { theme } = useTheme();
+  const { t } = useLanguage();
   const { currentResult, isLoading, fetchResults } = useResults();
 
   const handleRefresh = async () => {
@@ -79,6 +73,11 @@ export default function ResultsScreen() {
         return status;
     }
   };
+
+  const validGrades = currentResult?.subjects.filter(s => s.grade !== null) || [];
+  const calculatedGpa = validGrades.length > 0 
+    ? validGrades.reduce((sum, s) => sum + (s.grade || 0), 0) / validGrades.length
+    : 0;
 
   const passedCount = currentResult?.subjects.filter(
     s => s.status === 'V' || s.status === 'AC'
@@ -161,8 +160,14 @@ export default function ResultsScreen() {
                   {t.semesterGpa}
                 </ThemedText>
                 <ThemedText type="h1" style={[styles.gpaValue, { color: theme.primary }]}>
-                  {currentResult.gpa.toFixed(2)}
+                  {calculatedGpa.toFixed(2)}
                 </ThemedText>
+                <View style={styles.gpaDisclaimer}>
+                  <Feather name="alert-circle" size={14} color={Colors.light.warning} />
+                  <ThemedText style={[styles.disclaimerText, { color: theme.textSecondary }]}>
+                    {t.gpaDisclaimer}
+                  </ThemedText>
+                </View>
               </View>
 
               <View style={styles.statsRow}>
@@ -303,6 +308,21 @@ const styles = StyleSheet.create({
   gpaValue: {
     fontSize: 48,
     fontWeight: '700',
+  },
+  gpaDisclaimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.light.warning + '10',
+    borderRadius: BorderRadius.xs,
+    gap: Spacing.xs,
+  },
+  disclaimerText: {
+    fontSize: 12,
+    flex: 1,
+    textAlign: 'center',
   },
   statsRow: {
     flexDirection: 'row',

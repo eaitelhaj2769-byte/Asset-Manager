@@ -26,10 +26,11 @@ interface ResultsContextType {
   recentSearches: string[];
   isLoading: boolean;
   error: string | null;
-  fetchResults: (studentId: string) => Promise<void>;
+  fetchResults: (studentId: string) => Promise<boolean>;
   clearCache: () => Promise<void>;
   addToRecentSearches: (studentId: string) => Promise<void>;
   removeFromHistory: (id: string) => Promise<void>;
+  setError: (error: string | null) => void;
 }
 
 const ResultsContext = createContext<ResultsContextType | undefined>(undefined);
@@ -81,7 +82,7 @@ export function ResultsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchResults = async (studentId: string) => {
+  const fetchResults = async (studentId: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
@@ -116,11 +117,13 @@ export function ResultsProvider({ children }: { children: ReactNode }) {
       await AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
       
       await addToRecentSearches(studentId);
+      setIsLoading(false);
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred';
       setError(message);
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
@@ -164,6 +167,7 @@ export function ResultsProvider({ children }: { children: ReactNode }) {
     clearCache,
     addToRecentSearches,
     removeFromHistory,
+    setError,
   };
 
   return (

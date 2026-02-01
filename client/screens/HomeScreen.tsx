@@ -6,11 +6,11 @@ import {
   Image,
   Pressable,
   ActivityIndicator,
-  I18nManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -42,7 +42,8 @@ export default function HomeScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme, isDark } = useTheme();
   const { t, isRTL } = useLanguage();
-  const { recentSearches, isLoading, error, fetchResults } = useResults();
+  const { recentSearches, isLoading, error, fetchResults, setError } = useResults();
+  const navigation = useNavigation<any>();
   
   const [studentId, setStudentId] = useState('');
   const [inputError, setInputError] = useState('');
@@ -57,14 +58,27 @@ export default function HomeScreen() {
     }
     
     setInputError('');
+    setError(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await fetchResults(trimmedId);
+    
+    const success = await fetchResults(trimmedId);
+    
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigation.navigate('ResultsTab');
+    }
   };
 
   const handleRecentSearch = async (id: string) => {
     setStudentId(id);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await fetchResults(id);
+    
+    const success = await fetchResults(id);
+    
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigation.navigate('ResultsTab');
+    }
   };
 
   return (
@@ -110,7 +124,7 @@ export default function HomeScreen() {
             styles.inputContainer,
             { 
               backgroundColor: theme.backgroundDefault,
-              borderColor: inputError ? Colors.light.error : theme.border,
+              borderColor: inputError || error ? Colors.light.error : theme.border,
             },
           ]}>
             <Feather 
@@ -133,6 +147,7 @@ export default function HomeScreen() {
               onChangeText={(text) => {
                 setStudentId(text);
                 if (inputError) setInputError('');
+                if (error) setError(null);
               }}
               keyboardType="number-pad"
               autoCorrect={false}

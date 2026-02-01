@@ -27,6 +27,7 @@ interface Translations {
   justifiedAbsence: string;
   unjustifiedAbsence: string;
   semesterGpa: string;
+  gpaDisclaimer: string;
   credits: string;
   passedSubjects: string;
   failedSubjects: string;
@@ -81,6 +82,7 @@ const translations: Record<Language, Translations> = {
     justifiedAbsence: 'Justified Absence',
     unjustifiedAbsence: 'Unjustified Absence',
     semesterGpa: 'Semester GPA',
+    gpaDisclaimer: 'This GPA is calculated automatically (sum of grades / number of subjects). Please wait for the official result from the university.',
     credits: 'Credits',
     passedSubjects: 'Passed',
     failedSubjects: 'Failed',
@@ -133,6 +135,7 @@ const translations: Record<Language, Translations> = {
     justifiedAbsence: 'Absence justifiée',
     unjustifiedAbsence: 'Absence injustifiée',
     semesterGpa: 'Moyenne du semestre',
+    gpaDisclaimer: 'Cette moyenne est calculée automatiquement (somme des notes / nombre de matières). Veuillez attendre le résultat officiel de l\'université.',
     credits: 'Crédits',
     passedSubjects: 'Validés',
     failedSubjects: 'Non validés',
@@ -185,6 +188,7 @@ const translations: Record<Language, Translations> = {
     justifiedAbsence: 'غياب مبرر',
     unjustifiedAbsence: 'غياب غير مبرر',
     semesterGpa: 'معدل الفصل',
+    gpaDisclaimer: 'هذا المعدل محسوب تلقائياً (مجموع الدرجات / عدد المواد). يرجى انتظار النتيجة الرسمية من الجامعة.',
     credits: 'الرصيد',
     passedSubjects: 'ناجح',
     failedSubjects: 'راسب',
