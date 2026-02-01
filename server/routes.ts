@@ -40,10 +40,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-          'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7,ar;q=0.6',
+          'Accept-Language': 'fr-FR,fr;q=0.9,ar;q=0.8,en-US;q=0.7,en;q=0.6',
           'Accept-Encoding': 'gzip, deflate, br',
           'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
         },
       });
 
@@ -57,15 +56,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const $ = cheerio.load(html);
 
-      const studentName = extractStudentName($, html) || `Etudiant ${studentId}`;
-      const academicYear = extractAcademicYear($, html) || getCurrentAcademicYear();
-      const semester = extractSemester($, html) || "Semestre 1";
-      const subjects = extractSubjects($, html);
+      const studentName = extractStudentName($, html);
+      const academicYear = extractAcademicYear(html) || getCurrentAcademicYear();
+      const semester = extractSemester(html) || "Semestre";
+      const subjects = extractSubjectsFromCards($, html);
 
-      console.log(`Found ${subjects.length} subjects`);
       console.log(`Student name: ${studentName}`);
       console.log(`Academic year: ${academicYear}`);
       console.log(`Semester: ${semester}`);
+      console.log(`Found ${subjects.length} subjects:`);
+      subjects.forEach(s => console.log(`  - ${s.name}: ${s.grade} (${s.status})`));
 
       const validGrades = subjects.filter(s => s.grade !== null);
       const gpa = validGrades.length > 0 
@@ -98,62 +98,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-function extractStudentName($: cheerio.CheerioAPI, html: string): string | null {
-  const patterns = [
-    /<td[^>]*>.*?Nom.*?<\/td>\s*<td[^>]*>(.*?)<\/td>/is,
-    /<td[^>]*>.*?Name.*?<\/td>\s*<td[^>]*>(.*?)<\/td>/is,
-    /Nom\s*:\s*([^<\n]+)/i,
-    /Etudiant\s*:\s*([^<\n]+)/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match && match[1]) {
-      const name = match[1].replace(/<[^>]*>/g, '').trim();
-      if (name.length > 2) return name;
+function extractStudentName($: cheerio.CheerioAPI, html: string): string {
+  const alertMatch = html.match(/<div class=['"]alert[^>]*>([^<]*N°Apogée[^<]*)<\/div>/i);
+  if (alertMatch) {
+    const text = alertMatch[1];
+    const nameMatch = text.match(/Filière\s*:\s*[^\s]+\s*(?:<br\s*\/?>)?\s*(.+?)(?:\s*&nbsp;|\s*$)/i);
+    if (nameMatch) {
+      return nameMatch[1].trim().replace(/&nbsp;/g, ' ').trim();
     }
   }
 
-  const nameElement = $('td:contains("Nom")').next('td');
-  if (nameElement.length) {
-    const name = nameElement.text().trim();
-    if (name.length > 2) return name;
+  const alertDiv = $('.alert.alert-dark');
+  if (alertDiv.length) {
+    const text = alertDiv.text();
+    const parts = text.split('Filière');
+    if (parts.length > 1) {
+      const afterFiliere = parts[1];
+      const colonIndex = afterFiliere.indexOf(':');
+      if (colonIndex !== -1) {
+        const rest = afterFiliere.substring(colonIndex + 1).trim();
+        const spaceParts = rest.split(/\s+/);
+        if (spaceParts.length > 1) {
+          return spaceParts.slice(1).join(' ').trim();
+        }
+      }
+    }
   }
 
-  const nameCell = $('th:contains("Nom")').parent().find('td');
-  if (nameCell.length) {
-    const name = nameCell.text().trim();
-    if (name.length > 2) return name;
+  const h5Match = html.match(/N°Apogée\s*:\s*\d+[^<]*Filière\s*:\s*[^\s<]+\s*(?:<br[^>]*>)?\s*([^<&]+)/i);
+  if (h5Match) {
+    return h5Match[1].trim();
   }
 
-  return null;
+  return "Etudiant";
 }
 
-function extractAcademicYear($: cheerio.CheerioAPI, html: string): string | null {
+function extractAcademicYear(html: string): string | null {
   const yearPatterns = [
     /20\d{2}[-\/]20\d{2}/,
-    /Année\s*(?:universitaire|scolaire)\s*:\s*(20\d{2}[-\/]20\d{2})/i,
+    /20\d{2}-20\d{2}/,
   ];
   
   for (const pattern of yearPatterns) {
-    const match = html.match(pattern);
-    if (match) {
-      return match[0].includes(':') ? match[1] : match[0];
-    }
-  }
-  
-  return null;
-}
-
-function extractSemester($: cheerio.CheerioAPI, html: string): string | null {
-  const semesterPatterns = [
-    /Semestre\s*\d+/i,
-    /S\d+/i,
-    /Semester\s*\d+/i,
-    /الفصل\s*\d+/,
-  ];
-  
-  for (const pattern of semesterPatterns) {
     const match = html.match(pattern);
     if (match) {
       return match[0];
@@ -163,128 +149,141 @@ function extractSemester($: cheerio.CheerioAPI, html: string): string | null {
   return null;
 }
 
-function extractSubjects($: cheerio.CheerioAPI, html: string): Subject[] {
+function extractSemester(html: string): string | null {
+  const semesterPatterns = [
+    /S\d+\.GR\d+/i,
+    /Semestre\s*\d+/i,
+    /S\d+/i,
+  ];
+  
+  for (const pattern of semesterPatterns) {
+    const match = html.match(pattern);
+    if (match) {
+      const semMatch = match[0].match(/S(\d+)/i);
+      if (semMatch) {
+        return `Semestre ${semMatch[1]}`;
+      }
+      return match[0];
+    }
+  }
+  
+  return null;
+}
+
+function extractSubjectsFromCards($: cheerio.CheerioAPI, html: string): Subject[] {
   const subjects: Subject[] = [];
   const seen = new Set<string>();
 
-  $('table').each((_, table) => {
-    $(table).find('tr').each((_, row) => {
-      const cells = $(row).find('td');
+  $('.card.bg-light').each((_, card) => {
+    const $card = $(card);
+    
+    const headerText = $card.find('.card-header b').text().trim();
+    
+    let subjectName = headerText;
+    const prefixMatch = subjectName.match(/^S\d+\.GR\d+\s*/i);
+    if (prefixMatch) {
+      subjectName = subjectName.substring(prefixMatch[0].length).trim();
+    }
+    subjectName = subjectName.replace(/&nbsp;/g, ' ').trim();
+
+    if (!subjectName || subjectName.length < 2 || seen.has(subjectName.toLowerCase())) {
+      return;
+    }
+    seen.add(subjectName.toLowerCase());
+
+    let grade: number | null = null;
+    let status: Subject['status'] = 'V';
+
+    const rows = $card.find('table tr');
+    rows.each((_, row) => {
+      const $row = $(row);
+      const rowText = $row.text();
       
-      if (cells.length >= 2) {
-        let subjectName = '';
-        let gradeText = '';
-        let statusText = '';
-
-        if (cells.length >= 3) {
-          subjectName = $(cells[0]).text().trim();
-          gradeText = $(cells[1]).text().trim();
-          statusText = $(cells[2]).text().trim();
-        } else if (cells.length === 2) {
-          subjectName = $(cells[0]).text().trim();
-          gradeText = $(cells[1]).text().trim();
-        }
-
-        subjectName = subjectName.replace(/\s+/g, ' ').trim();
-
-        if (subjectName.length > 3 && 
-            !subjectName.toLowerCase().includes('module') &&
-            !subjectName.toLowerCase().includes('matière') &&
-            !subjectName.toLowerCase().includes('note') &&
-            !subjectName.toLowerCase().includes('statut') &&
-            !seen.has(subjectName.toLowerCase())) {
-          
-          seen.add(subjectName.toLowerCase());
-
-          const gradeMatch = gradeText.match(/(\d+(?:[.,]\d+)?)/);
-          let grade: number | null = null;
-          
+      if (rowText.includes('نتيجة الوحدة') || rowText.includes('résultat')) {
+        const tds = $row.find('td');
+        tds.each((_, td) => {
+          const tdText = $(td).text().trim();
+          const gradeMatch = tdText.match(/^(\d+(?:[.,]\d+)?)$/);
           if (gradeMatch) {
             grade = parseFloat(gradeMatch[1].replace(',', '.'));
-            if (grade > 20 || grade < 0) grade = null;
           }
+        });
 
-          let status: Subject['status'] = 'V';
-          const statusUpper = statusText.toUpperCase();
-          
-          if (statusUpper.includes('NV') || statusUpper.includes('NON VALID')) {
-            status = 'NV';
-          } else if (statusUpper.includes('AC') || statusUpper.includes('ACQUIS')) {
-            status = 'AC';
-          } else if (statusUpper.includes('ABJ')) {
-            status = 'ABJ';
-          } else if (statusUpper.includes('ABI')) {
-            status = 'ABI';
-          } else if (grade !== null) {
-            status = grade >= 10 ? 'V' : 'NV';
-          }
-
-          subjects.push({
-            name: subjectName,
-            grade,
-            status,
-          });
+        if ($row.hasClass('text-success') || rowText.includes('مستوفاة') || rowText.includes('validé')) {
+          status = 'V';
+        } else if ($row.hasClass('text-danger') || rowText.includes('غير مستوفاة') || rowText.includes('non validé')) {
+          status = 'NV';
         }
       }
     });
-  });
 
-  const rowPattern = /<tr[^>]*>(.*?)<\/tr>/gis;
-  const cellPattern = /<td[^>]*>(.*?)<\/td>/gis;
-  let rowMatch;
-  
-  while ((rowMatch = rowPattern.exec(html)) !== null) {
-    const rowContent = rowMatch[1];
-    const cells: string[] = [];
-    let cellMatch;
-    
-    const cellRegex = /<td[^>]*>(.*?)<\/td>/gis;
-    while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
-      cells.push(cellMatch[1].replace(/<[^>]*>/g, '').trim());
+    if (grade === null) {
+      const cardText = $card.text();
+      const gradeMatches = cardText.match(/(\d+(?:[.,]\d+)?)\s*\/20/g);
+      if (gradeMatches && gradeMatches.length > 0) {
+        const lastGradeMatch = gradeMatches[gradeMatches.length - 1].match(/(\d+(?:[.,]\d+)?)/);
+        if (lastGradeMatch) {
+          grade = parseFloat(lastGradeMatch[1].replace(',', '.'));
+        }
+      }
     }
 
-    if (cells.length >= 2) {
-      const subjectName = cells[0].replace(/\s+/g, ' ').trim();
+    if (grade !== null) {
+      status = grade >= 10 ? 'V' : 'NV';
+    }
+
+    subjects.push({
+      name: subjectName,
+      grade,
+      status,
+    });
+  });
+
+  if (subjects.length === 0) {
+    const cardPattern = /<div class=['"]card bg-light[^>]*>[\s\S]*?<div class=['"]card-header['"]>([\s\S]*?)<\/div>[\s\S]*?<div class=['"]card-body['"]>([\s\S]*?)<\/div>/gi;
+    let cardMatch;
+    
+    while ((cardMatch = cardPattern.exec(html)) !== null) {
+      const header = cardMatch[1];
+      const body = cardMatch[2];
       
-      if (subjectName.length > 3 && 
-          !subjectName.toLowerCase().includes('module') &&
-          !subjectName.toLowerCase().includes('matière') &&
-          !subjectName.toLowerCase().includes('note') &&
-          !subjectName.toLowerCase().includes('statut') &&
-          !seen.has(subjectName.toLowerCase())) {
-        
-        seen.add(subjectName.toLowerCase());
-
-        const gradeMatch = cells[1]?.match(/(\d+(?:[.,]\d+)?)/);
-        let grade: number | null = null;
-        
-        if (gradeMatch) {
-          grade = parseFloat(gradeMatch[1].replace(',', '.'));
-          if (grade > 20 || grade < 0) grade = null;
-        }
-
-        let status: Subject['status'] = 'V';
-        const statusText = cells[2] || '';
-        const statusUpper = statusText.toUpperCase();
-        
-        if (statusUpper.includes('NV')) {
-          status = 'NV';
-        } else if (statusUpper.includes('AC')) {
-          status = 'AC';
-        } else if (statusUpper.includes('ABJ')) {
-          status = 'ABJ';
-        } else if (statusUpper.includes('ABI')) {
-          status = 'ABI';
-        } else if (grade !== null) {
-          status = grade >= 10 ? 'V' : 'NV';
-        }
-
-        subjects.push({
-          name: subjectName,
-          grade,
-          status,
-        });
+      let subjectName = header.replace(/<[^>]*>/g, '').trim();
+      const prefixMatch = subjectName.match(/^S\d+\.GR\d+\s*/i);
+      if (prefixMatch) {
+        subjectName = subjectName.substring(prefixMatch[0].length).trim();
       }
+      subjectName = subjectName.replace(/&nbsp;/g, ' ').trim();
+
+      if (!subjectName || subjectName.length < 2 || seen.has(subjectName.toLowerCase())) {
+        continue;
+      }
+      seen.add(subjectName.toLowerCase());
+
+      let grade: number | null = null;
+      let status: Subject['status'] = 'V';
+
+      const gradeMatches = body.match(/(\d+(?:[.,]\d+)?)\s*(?:<[^>]*>)*\s*\/20/g);
+      if (gradeMatches && gradeMatches.length > 0) {
+        const lastGradeStr = gradeMatches[gradeMatches.length - 1];
+        const numMatch = lastGradeStr.match(/(\d+(?:[.,]\d+)?)/);
+        if (numMatch) {
+          grade = parseFloat(numMatch[1].replace(',', '.'));
+        }
+      }
+
+      if (body.includes('text-success') || body.includes('مستوفاة')) {
+        status = 'V';
+      } else if (body.includes('text-danger') || body.includes('غير مستوفاة')) {
+        status = 'NV';
+      } else if (grade !== null) {
+        status = grade >= 10 ? 'V' : 'NV';
+      }
+
+      subjects.push({
+        name: subjectName,
+        grade,
+        status,
+      });
     }
   }
 
@@ -297,7 +296,7 @@ function getCurrentAcademicYear(): string {
   const month = now.getMonth();
   
   if (month >= 8) {
-    return `${year}/${year + 1}`;
+    return `${year}-${year + 1}`;
   }
-  return `${year - 1}/${year}`;
+  return `${year - 1}-${year}`;
 }

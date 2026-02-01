@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
-import { StyleSheet } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, useColorScheme } from "react-native";
+import { NavigationContainer, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -21,10 +21,38 @@ import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ResultsProvider } from "@/contexts/ResultsContext";
+import { Colors } from "@/constants/theme";
 
 SplashScreen.preventAutoHideAsync();
 
+const CustomDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: Colors.dark.primary,
+    background: Colors.dark.backgroundRoot,
+    card: Colors.dark.backgroundDefault,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+  },
+};
+
+const CustomLightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: Colors.light.primary,
+    background: Colors.light.backgroundRoot,
+    card: Colors.light.backgroundDefault,
+    text: Colors.light.text,
+    border: Colors.light.border,
+  },
+};
+
 export default function App() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
   const [fontsLoaded, fontError] = useFonts({
     IBMPlexSans_400Regular,
     IBMPlexSans_500Medium,
@@ -50,12 +78,12 @@ export default function App() {
             <KeyboardProvider>
               <LanguageProvider>
                 <ResultsProvider>
-                  <NavigationContainer>
+                  <NavigationContainer theme={isDark ? CustomDarkTheme : CustomLightTheme}>
                     <RootStackNavigator />
                   </NavigationContainer>
                 </ResultsProvider>
               </LanguageProvider>
-              <StatusBar style="auto" />
+              <StatusBar style={isDark ? "light" : "dark"} />
             </KeyboardProvider>
           </GestureHandlerRootView>
         </SafeAreaProvider>
