@@ -1,14 +1,16 @@
 {
   "expo": {
     "name": "FSJES UCA Results",
-    "slug": "fsjes-uca-results",
+    "slug": "fsjes-uca-results-1",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.fsjes.results",
-      "adaptiveIcon": {
-        "backgroundColor": "#1E3A8A"
+      "package": "com.fsjes.results"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e8c0dfaf-d9c5-41fd-9183-141510d7691e"
       }
     }
   }
