@@ -1,40 +1,15 @@
 {
   "expo": {
-    "name": "FSJES UCA Results+",
+    "name": "FSJES UCA Results",
     "slug": "fsjes-uca-results",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "scheme": "fsjesresults",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.fsjes.results"
-    },
     "android": {
+      "package": "com.fsjes.results",
       "adaptiveIcon": {
-        "backgroundColor": "#1E3A8A",
-        "foregroundImage": "./assets/icon.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.fsjes.results"
-    },
-    "web": {
-      "output": "single",
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#1E3A8A"
-        }
-      ],
-      "expo-web-browser"
-    ]
+        "backgroundColor": "#1E3A8A"
+      }
+    }
   }
 }
