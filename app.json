@@ -1,12 +1,10 @@
 {
   "expo": {
     "name": "FSJES UCA Results",
-    "slug": "fsjes-uca-results-1",
+    "slug": "fsjes-uca-final",
     "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.fsjes.results"
+      "package": "com.fsjes.results.final"
     },
     "extra": {
       "eas": {
