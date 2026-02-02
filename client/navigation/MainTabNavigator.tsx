@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet } from "react-native";
 
@@ -56,7 +56,7 @@ export default function MainTabNavigator() {
         options={{
           title: t.home,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
@@ -66,7 +66,7 @@ export default function MainTabNavigator() {
         options={{
           title: t.results,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="file-text" size={size} color={color} />
+            <Ionicons name="document-text-outline" size={size} color={color} />
           ),
         }}
       />
@@ -76,7 +76,7 @@ export default function MainTabNavigator() {
         options={{
           title: t.history,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="bar-chart-2" size={size} color={color} />
+            <Ionicons name="stats-chart-outline" size={size} color={color} />
           ),
         }}
       />
@@ -86,7 +86,7 @@ export default function MainTabNavigator() {
         options={{
           title: t.settings,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="settings" size={size} color={color} />
+            <Ionicons name="settings-outline" size={size} color={color} />
           ),
         }}
       />

@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   Image,
   FlatList,
   RefreshControl,
+  Pressable,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
@@ -26,6 +28,8 @@ import { Spacing, BorderRadius, Colors } from '@/constants/theme';
 
 import emptyResultsImage from '../../assets/images/empty-results.png';
 
+const REQUIRED_SUBJECTS = 7;
+
 export default function ResultsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -33,6 +37,7 @@ export default function ResultsScreen() {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const { currentResult, isLoading, fetchResults } = useResults();
+  const [showGpaModal, setShowGpaModal] = useState(false);
 
   const handleRefresh = async () => {
     if (currentResult?.studentId) {
@@ -134,13 +139,7 @@ export default function ResultsScreen() {
               <ThemedText type="h4">{currentResult.studentName}</ThemedText>
               <View style={styles.studentMeta}>
                 <View style={styles.metaItem}>
-                  <Feather name="calendar" size={14} color={theme.textSecondary} />
-                  <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>
-                    {currentResult.academicYear}
-                  </ThemedText>
-                </View>
-                <View style={styles.metaItem}>
-                  <Feather name="book" size={14} color={theme.textSecondary} />
+                  <Ionicons name="book-outline" size={14} color={theme.textSecondary} />
                   <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>
                     {currentResult.semester}
                   </ThemedText>
@@ -159,15 +158,32 @@ export default function ResultsScreen() {
                 <ThemedText style={[styles.gpaLabel, { color: theme.textSecondary }]}>
                   {t.semesterGpa}
                 </ThemedText>
-                <ThemedText type="h1" style={[styles.gpaValue, { color: theme.primary }]}>
-                  {calculatedGpa.toFixed(2)}
-                </ThemedText>
-                <View style={[styles.gpaDisclaimer, { backgroundColor: theme.warning + '10' }]}>
-                  <Feather name="alert-circle" size={14} color={theme.warning} />
-                  <ThemedText style={[styles.disclaimerText, { color: theme.textSecondary }]}>
-                    {t.gpaDisclaimer}
-                  </ThemedText>
-                </View>
+                {validGrades.length >= REQUIRED_SUBJECTS ? (
+                  <>
+                    <ThemedText type="h1" style={[styles.gpaValue, { color: theme.primary }]}>
+                      {calculatedGpa.toFixed(2)}
+                    </ThemedText>
+                    <View style={[styles.gpaDisclaimer, { backgroundColor: theme.warning + '10' }]}>
+                      <Ionicons name="alert-circle-outline" size={14} color={theme.warning} />
+                      <ThemedText style={[styles.disclaimerText, { color: theme.textSecondary }]}>
+                        {t.gpaDisclaimer}
+                      </ThemedText>
+                    </View>
+                  </>
+                ) : (
+                  <Pressable 
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowGpaModal(true);
+                    }}
+                    style={styles.waitingContainer}
+                  >
+                    <Ionicons name="alert-circle" size={48} color={theme.warning} />
+                    <ThemedText style={[styles.waitingText, { color: theme.textSecondary }]}>
+                      {validGrades.length}/{REQUIRED_SUBJECTS}
+                    </ThemedText>
+                  </Pressable>
+                )}
               </View>
 
               <View style={styles.statsRow}>
@@ -260,6 +276,31 @@ export default function ResultsScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+      
+      <Modal
+        visible={showGpaModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowGpaModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowGpaModal(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <Ionicons name="alert-circle" size={48} color={theme.warning} />
+            <ThemedText style={styles.modalText}>
+              {t.waitingForSubjects}
+            </ThemedText>
+            <Pressable
+              style={[styles.modalButton, { backgroundColor: theme.primary }]}
+              onPress={() => setShowGpaModal(false)}
+            >
+              <ThemedText style={styles.modalButtonText}>OK</ThemedText>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </ThemedView>
   );
 }
@@ -300,6 +341,45 @@ const styles = StyleSheet.create({
   gpaContainer: {
     alignItems: 'center',
     marginBottom: Spacing.xl,
+  },
+  waitingContainer: {
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  waitingText: {
+    fontSize: 16,
+    marginTop: Spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing['2xl'],
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xl,
+    lineHeight: 24,
+  },
+  modalButton: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.sm,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
   gpaLabel: {
     fontSize: 14,

@@ -55,6 +55,7 @@ interface Translations {
   refresh: string;
   share: string;
   export: string;
+  waitingForSubjects: string;
 }
 
 const translations: Record<Language, Translations> = {
@@ -110,6 +111,7 @@ const translations: Record<Language, Translations> = {
     refresh: 'Refresh',
     share: 'Share',
     export: 'Export',
+    waitingForSubjects: 'Waiting for remaining subjects to calculate GPA',
   },
   fr: {
     appName: 'FSJES UCA Results+',
@@ -163,6 +165,7 @@ const translations: Record<Language, Translations> = {
     refresh: 'Actualiser',
     share: 'Partager',
     export: 'Exporter',
+    waitingForSubjects: 'En attente des matières restantes pour calculer la moyenne',
   },
   ar: {
     appName: 'FSJES UCA Results+',
@@ -216,6 +219,7 @@ const translations: Record<Language, Translations> = {
     refresh: 'تحديث',
     share: 'مشاركة',
     export: 'تصدير',
+    waitingForSubjects: 'في انتظار باقي المواد لحساب المعدل',
   },
 };
 

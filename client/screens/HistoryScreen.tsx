@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
@@ -273,7 +273,7 @@ function SemesterCard({
         </View>
         
         <Animated.View style={chevronStyle}>
-          <Feather name="chevron-down" size={20} color={theme.textSecondary} />
+          <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
         </Animated.View>
       </View>
 
@@ -325,7 +325,7 @@ function SemesterCard({
               { opacity: pressed ? 0.7 : 1 }
             ]}
           >
-            <Feather name="trash-2" size={16} color={theme.error} />
+            <Ionicons name="trash-outline" size={16} color={theme.error} />
             <ThemedText style={{ color: theme.error, marginLeft: Spacing.xs }}>
               Delete
             </ThemedText>

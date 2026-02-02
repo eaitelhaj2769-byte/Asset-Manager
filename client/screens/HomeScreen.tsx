@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
@@ -127,8 +127,8 @@ export default function HomeScreen() {
               borderColor: inputError || error ? theme.error : theme.border,
             },
           ]}>
-            <Feather 
-              name="user" 
+            <Ionicons 
+              name="person-outline" 
               size={20} 
               color={theme.textSecondary} 
               style={styles.inputIcon}
@@ -247,9 +247,9 @@ function RecentSearchItem({
           animatedStyle,
         ]}
       >
-        <Feather name="clock" size={18} color={theme.textSecondary} />
+        <Ionicons name="time-outline" size={18} color={theme.textSecondary} />
         <ThemedText style={styles.recentId}>{studentId}</ThemedText>
-        <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+        <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
       </AnimatedPressable>
     </Animated.View>
   );

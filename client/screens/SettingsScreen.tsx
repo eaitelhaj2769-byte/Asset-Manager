@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   FadeInDown,
@@ -102,8 +102,8 @@ export default function SettingsScreen() {
             <Card style={styles.optionsCard}>
               <View style={styles.optionRow}>
                 <View style={styles.optionInfo}>
-                  <Feather 
-                    name={isDark ? 'moon' : 'sun'} 
+                  <Ionicons 
+                    name={isDark ? 'moon-outline' : 'sunny-outline'} 
                     size={20} 
                     color={theme.primary} 
                   />
@@ -233,8 +233,8 @@ function ClearCacheButton({
       ]}
     >
       <View style={styles.optionInfo}>
-        <Feather 
-          name={showSuccess ? 'check-circle' : 'trash-2'} 
+        <Ionicons 
+          name={showSuccess ? 'checkmark-circle-outline' : 'trash-outline'} 
           size={20} 
           color={showSuccess ? theme.success : theme.error} 
         />
@@ -248,8 +248,8 @@ function ClearCacheButton({
         </ThemedText>
       </View>
       
-      <Feather 
-        name="chevron-right" 
+      <Ionicons 
+        name="chevron-forward" 
         size={18} 
         color={theme.textSecondary} 
       />
