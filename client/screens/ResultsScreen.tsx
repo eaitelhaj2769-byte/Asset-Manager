@@ -45,13 +45,13 @@ export default function ResultsScreen() {
     switch (status) {
       case 'V':
       case 'AC':
-        return Colors.light.success;
+        return theme.success;
       case 'NV':
-        return Colors.light.error;
+        return theme.error;
       case 'ABJ':
-        return Colors.light.warning;
+        return theme.warning;
       case 'ABI':
-        return Colors.light.disabled;
+        return theme.disabled;
       default:
         return theme.textSecondary;
     }
@@ -162,8 +162,8 @@ export default function ResultsScreen() {
                 <ThemedText type="h1" style={[styles.gpaValue, { color: theme.primary }]}>
                   {calculatedGpa.toFixed(2)}
                 </ThemedText>
-                <View style={styles.gpaDisclaimer}>
-                  <Feather name="alert-circle" size={14} color={Colors.light.warning} />
+                <View style={[styles.gpaDisclaimer, { backgroundColor: theme.warning + '10' }]}>
+                  <Feather name="alert-circle" size={14} color={theme.warning} />
                   <ThemedText style={[styles.disclaimerText, { color: theme.textSecondary }]}>
                     {t.gpaDisclaimer}
                   </ThemedText>
@@ -172,8 +172,8 @@ export default function ResultsScreen() {
 
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <View style={[styles.statBadge, { backgroundColor: Colors.light.success + '20' }]}>
-                    <ThemedText style={[styles.statNumber, { color: Colors.light.success }]}>
+                  <View style={[styles.statBadge, { backgroundColor: theme.success + '20' }]}>
+                    <ThemedText style={[styles.statNumber, { color: theme.success }]}>
                       {passedCount}
                     </ThemedText>
                   </View>
@@ -183,8 +183,8 @@ export default function ResultsScreen() {
                 </View>
                 
                 <View style={styles.statItem}>
-                  <View style={[styles.statBadge, { backgroundColor: Colors.light.error + '20' }]}>
-                    <ThemedText style={[styles.statNumber, { color: Colors.light.error }]}>
+                  <View style={[styles.statBadge, { backgroundColor: theme.error + '20' }]}>
+                    <ThemedText style={[styles.statNumber, { color: theme.error }]}>
                       {failedCount}
                     </ThemedText>
                   </View>
@@ -315,7 +315,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.light.warning + '10',
     borderRadius: BorderRadius.xs,
     gap: Spacing.xs,
   },

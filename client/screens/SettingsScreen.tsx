@@ -236,12 +236,12 @@ function ClearCacheButton({
         <Feather 
           name={showSuccess ? 'check-circle' : 'trash-2'} 
           size={20} 
-          color={showSuccess ? Colors.light.success : Colors.light.error} 
+          color={showSuccess ? theme.success : theme.error} 
         />
         <ThemedText 
           style={[
             styles.optionLabel,
-            { color: showSuccess ? Colors.light.success : Colors.light.error }
+            { color: showSuccess ? theme.success : theme.error }
           ]}
         >
           {showSuccess ? t.cacheCleared : t.clearCache}

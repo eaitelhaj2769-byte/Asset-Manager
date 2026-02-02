@@ -124,7 +124,7 @@ export default function HomeScreen() {
             styles.inputContainer,
             { 
               backgroundColor: theme.backgroundDefault,
-              borderColor: inputError || error ? Colors.light.error : theme.border,
+              borderColor: inputError || error ? theme.error : theme.border,
             },
           ]}>
             <Feather 
@@ -157,11 +157,11 @@ export default function HomeScreen() {
           </View>
           
           {inputError ? (
-            <ThemedText style={styles.errorText}>{inputError}</ThemedText>
+            <ThemedText style={[styles.errorText, { color: theme.error }]}>{inputError}</ThemedText>
           ) : null}
           
           {error ? (
-            <ThemedText style={styles.errorText}>{error}</ThemedText>
+            <ThemedText style={[styles.errorText, { color: theme.error }]}>{error}</ThemedText>
           ) : null}
 
           <Button 
@@ -309,7 +309,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   errorText: {
-    color: Colors.light.error,
     fontSize: 14,
     marginBottom: Spacing.sm,
   },

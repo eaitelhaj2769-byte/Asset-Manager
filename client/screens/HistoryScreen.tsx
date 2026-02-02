@@ -60,9 +60,9 @@ export default function HistoryScreen() {
   const padding = 40;
 
   const getGpaColor = (gpa: number) => {
-    if (gpa >= 12) return Colors.light.success;
-    if (gpa >= 10) return Colors.light.warning;
-    return Colors.light.error;
+    if (gpa >= 12) return theme.success;
+    if (gpa >= 10) return theme.warning;
+    return theme.error;
   };
 
   const renderChart = () => {
@@ -283,7 +283,7 @@ function SemesterCard({
             style={[
               styles.progressFill,
               { 
-                backgroundColor: Colors.light.success,
+                backgroundColor: theme.success,
                 width: `${(passedCount / totalCount) * 100}%`,
               }
             ]} 
@@ -295,7 +295,7 @@ function SemesterCard({
       </View>
 
       {isExpanded ? (
-        <View style={styles.expandedContent}>
+        <View style={[styles.expandedContent, { borderTopColor: theme.border }]}>
           {item.subjects.map((subject, index) => (
             <View key={index} style={styles.subjectRow}>
               <ThemedText style={styles.expandedSubject} numberOfLines={1}>
@@ -306,9 +306,9 @@ function SemesterCard({
                   styles.expandedGrade,
                   { 
                     color: subject.status === 'V' || subject.status === 'AC' 
-                      ? Colors.light.success 
+                      ? theme.success 
                       : subject.status === 'NV' 
-                        ? Colors.light.error 
+                        ? theme.error 
                         : theme.textSecondary 
                   }
                 ]}
@@ -325,8 +325,8 @@ function SemesterCard({
               { opacity: pressed ? 0.7 : 1 }
             ]}
           >
-            <Feather name="trash-2" size={16} color={Colors.light.error} />
-            <ThemedText style={{ color: Colors.light.error, marginLeft: Spacing.xs }}>
+            <Feather name="trash-2" size={16} color={theme.error} />
+            <ThemedText style={{ color: theme.error, marginLeft: Spacing.xs }}>
               Delete
             </ThemedText>
           </Pressable>
@@ -401,7 +401,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   subjectRow: {
     flexDirection: 'row',

@@ -1,21 +1,38 @@
-import { useEffect, useState } from "react";
-import { useColorScheme as useRNColorScheme } from "react-native";
+import { useEffect, useState, useCallback } from "react";
 
-/**
- * To support static rendering, this value needs to be re-calculated on the client side for web
- */
-export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  useEffect(() => {
-    setHasHydrated(true);
+export function useColorScheme(): "light" | "dark" {
+  const getSystemColorScheme = useCallback((): "light" | "dark" => {
+    if (typeof window !== "undefined" && window.matchMedia) {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    return "light";
   }, []);
 
-  const colorScheme = useRNColorScheme();
+  const [colorScheme, setColorScheme] = useState<"light" | "dark">(getSystemColorScheme);
 
-  if (hasHydrated) {
-    return colorScheme;
-  }
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return;
+    }
 
-  return "light";
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const handleChange = (event: MediaQueryListEvent) => {
+      setColorScheme(event.matches ? "dark" : "light");
+    };
+
+    setColorScheme(mediaQuery.matches ? "dark" : "light");
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
+
+  return colorScheme;
 }
